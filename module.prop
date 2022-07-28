@@ -1,0 +1,8 @@
+# id 只能填 字母 数字 半角符号
+id=Android10_AND_11_GSI_Generic_Fix_For_Huawei_P10
+name=华为P10安卓10和11GSI通用修复
+version=v2020.07.28
+versionCode=1
+author=Coconutat
+description=华为P10安卓10和11GSI通用修复，修复扬声器，触摸屏问题。
+minMagisk=19000
