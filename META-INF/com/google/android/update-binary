@@ -41,11 +41,12 @@ print_modname() {
   ui_print " $MODNAME "
   ui_print "$pounds"
   ui_print "******************************"
-  ui_print " 由 Magisk 提供技术支持(模块由Coconutat编写) "
+  ui_print " 由 Magisk 提供技术支持"
+  ui_print "作者：Coconutat"
   ui_print "******************************"
   ui_print "Github主页：https://github.com/Coconutat"
   ui_print "美国有苹果，中国有华为！华为手机，华为美！爵士人生，极致享受。"
-  ui_print "v2022.07.28"
+  ui_print "v2022.07.30"
 }
 
 ##############
