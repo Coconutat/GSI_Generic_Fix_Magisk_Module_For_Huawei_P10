@@ -2,7 +2,7 @@
 ### 安卓10和11GSI的通用修复模组  
 
 ***  
-    If need Android 12 or 12L Version,[Check Here!](https://github.com/Coconutat/GSI_Generic_Fix_Magisk_Module_For_Huawei_P10/tree/Android-12/12L).
+ ***If need Android 12 or 12L Version,[Check Here!](https://github.com/Coconutat/GSI_Generic_Fix_Magisk_Module_For_Huawei_P10/tree/Android-12/12L).***
 ***  
     
 ***
@@ -24,7 +24,7 @@ So this need repair by shell commands. However, it is troublesome to enter the s
 ***  
 
 ***  
-    如果需要安卓12或者12L的版本,[点击这里!](https://github.com/Coconutat/GSI_Generic_Fix_Magisk_Module_For_Huawei_P10/tree/Android-12/12L).
+***如果需要安卓12或者12L的版本,[点击这里!](https://github.com/Coconutat/GSI_Generic_Fix_Magisk_Module_For_Huawei_P10/tree/Android-12/12L).***
 ***  
 
 ###### 功能：  
