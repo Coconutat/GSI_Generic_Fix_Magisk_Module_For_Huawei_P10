@@ -1,12 +1,11 @@
-# Android12 or 12L GSI Generic Fix Module For Huawei P10  
-### 安卓12或12L的通用修复模组  
+# Android 12/12L/13 GSI Generic Fix Module For Huawei P10 (Victoria)
     
 ***
-Because there will be some bugs when Huawei P10 installs the GSI general image of Android 12 or 12L.  
-So this need repair by shell commands. However, it is troublesome to enter the shell to input commands every time you start up. So I wrote this module.  
+Because there will be some bugs when you install the GSI image on Huawei P10.  
+These bugs can be repaired by shell commands. However, it is uncomfortable to enter the shell every time you start up. So I wrote this module.  
 ***
 ###### Features：   
-* Fix the touchscreen no reaction on the left/right edge issue.  
+* Fix the touchscreen with no reaction on the left/right sides of the display.  
 ***  
   
   
