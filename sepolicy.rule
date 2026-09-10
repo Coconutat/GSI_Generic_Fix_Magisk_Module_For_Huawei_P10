@@ -1,1 +1,14 @@
-# 如果您的模块需要一些额外的sepolicy修补程序，请将这些规则添加到此文件中
+# KernelSU / Magisk 模块 sepolicy 补丁
+# 每行一条 allow / type 规则, 由模块管理器在开机时应用。
+#
+# 当前为空: GSI 上 SELinux 已经是 Permissive (userdebug 尊重 androidboot.selinux=permissive),
+# 所有拒绝都只记录不拦截, 因此本模组不需要额外放行。
+#
+# 如果将来要做 permissive -> enforcing 收敛, 从真机取证里提取需要放行的规则:
+#   adb shell su -c dmesg | grep "avc: *denied"
+#   adb logcat -b all -d | grep "avc: *denied"
+# 典型条目 (P10 + A13 GSI 实测, 全部 permissive=1 未拦):
+#   allow hal_audio_default default_prop:file { read open getattr };
+#   allow hal_camera_default config_prop:file { read open getattr };
+#   allow hal_fingerprint_default default_prop:file { read open getattr };
+#   allow phhsu_daemon audio_device:chr_file setattr;

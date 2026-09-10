@@ -1,3 +1,13 @@
-# 这个文件将被 resetprop 读取
-# 示例: 改变 dpi
-# ro.sf.lcd_density=320
+# 会被 resetprop 读取 (KernelSU: 由模块管理器应用)
+# 当前没有必须设置的属性, 保持为空以免污染 vendor 属性。
+#
+# 常用备选 (按需取消注释):
+# 强制使用 Mali 厂商 EGL (P10 本来就是 mali, 一般不需要):
+# ro.hardware.egl=mali
+#
+# 关闭 Backpressure (华为原厂在 EMUI 上是这么设的, GSI 上如出现 UI 卡顿可试):
+# debug.sf.disable_backpressure=1
+# debug.sf.latch_unsignaled=1
+#
+# 停用 sensor 直通上报 (部分机型开传感器会崩, P10 不需要):
+# persist.sys.phh.disable_sensor_direct_report=true
