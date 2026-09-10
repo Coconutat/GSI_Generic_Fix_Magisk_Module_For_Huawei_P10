@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  由 post-fs-data.sh 在开机时按 device.conf 的 DISABLE_TELEPHONY 重写。
+  DISABLE_TELEPHONY=1: 写入 unavailable-feature -> 系统认为无电话硬件,
+                        PhoneApp 不再建 GsmCdmaPhone, 消除无 SIM 时的崩溃循环。
+  DISABLE_TELEPHONY=0: 本文件变成空 <permissions/>, 不产生任何影响。
+  SELinux 标签必须是 u:object_r:vendor_configs_file:s0 (与同目录其他 xml 一致)。
+-->
+<permissions>
+</permissions>

@@ -1,7 +1,7 @@
 # P10 GSI 修复模组
 id=p10-gsi-fix
 name=华为 P10 GSI 修复模组
-version=v1.1.0
-versionCode=2
+version=v1.2.0
+versionCode=3
 author=Coconutat
-description=恢复华为真实设备身份(VTR-AL00/HWVTR 等)；修复 GSI 触摸屏左右边缘无响应；外放节点权限；可选 GPU 与 SUSFS 开关。兼容 meta-hybrid_mount 与 SUSFS，适用于 Android 10+ GSI。
+description=恢复华为真实设备身份(VTR-AL00/HWVTR)；修复 GSI 触摸边缘；外放节点权限；zram 与无 SIM 崩溃循环优化；可选 CPU/GPU 开关。兼容 meta-hybrid_mount 与 SUSFS。

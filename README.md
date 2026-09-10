@@ -71,6 +71,54 @@ KernelSU / KernelSU-Next / Magisk 通用。兼容 **meta-hybrid_mount** 与 **SU
 注意: SUSFS 的 `set_cmdline_or_bootconfig` / `set_uname` 本模组**未使用**，避免与
 身份修改叠加产生不一致。身份只通过 resetprop 改属性，SUSFS 只负责隐藏。
 
+## 性能优化 (v1.2.0)
+
+### 实测诊断 (2026-09-10, 游戏运行中)
+
+```
+SystemUI gfxinfo: 帧 8154, Janky 36.36%, p50=30ms p90=57ms p99=150ms
+                  Missed Vsync 618, High input latency 8260, Slow UI thread 2126
+                  GPU: p50=6ms p90=15ms          <-- GPU 不是瓶颈
+CPU: 8 核全在线, interactive, 小核 max 1.844GHz / 大核 max 2.362GHz
+GPU: gpu_scene_aware, 178/400/533/807/960/1037MHz 档位
+内存: 3.13GiB, Swap 0K;  kswapd0 = 15% 内核CPU
+vmstat: allocstall_normal=184 (直接回收停顿), pgmajfault=144684, pswpin/pswpout=0
+存储: 顺序读 177MB/s (非瓶颈)
+崩溃: com.android.phone 每 ~6.6s 一次, 实测 9 次/分钟
+其它: /dev/stune 不存在 -> 无 EAS/schedtune 触摸 boost
+```
+
+结论: **不是硬件不行, 也不是 GPU 不行**。GPU 每帧只用 6ms (预算 16.7ms)。
+瓶颈是 ① 零 swap 导致的内存回收停顿 ② phone 崩溃循环的持续开销 ③ 无触摸 boost 的爬频延迟。
+
+### 本模组做的三件事
+
+| 开关 | 默认 | 作用 |
+|---|---|---|
+| `ZRAM_SIZE_MB=1024` | 开 | 启用 zram 压缩交换 + `vm.swappiness=100`, 消除直接回收停顿 |
+| `DISABLE_TELEPHONY=1` | 开 | vendor 权限 XML 声明无电话硬件, 消除 9 次/分钟的崩溃循环 |
+| `CPU_GOV` / `LITTLE_MIN_FREQ` | 空 (不动) | 可选: 提频消除爬频延迟 (代价是耗电发热) |
+
+### 怎么量效果
+
+```
+# 清空统计 -> 静置或滑动桌面 1 分钟 -> 看数字
+adb shell dumpsys gfxinfo com.android.systemui reset
+adb shell dumpsys gfxinfo com.android.systemui | head -20
+# 关注: Janky %, 50th percentile (目标 <=16ms), High input latency
+adb shell su -c 'cat /proc/vmstat | grep -E "allocstall|pswpin|pswpout"'
+adb shell su -c 'cat /proc/swaps'
+adb shell su -c 'cat /data/local/tmp/p10-gsi-fix.log'
+```
+
+注意: 测基线时**不要开游戏**。上面那份基线是在游戏 (152% CPU) 下取的, 数字偏悲观。
+
+### 不要做的事
+
+- 不要改 GPU governor 到 performance — GPU 中位 6ms, 改了只是发热。
+- 不要动 `debug.sf.disable_backpressure` / `latch_unsignaled` — GSI 上已经继承到 =1 (与 EMUI 一致)。
+- 不要加大 I/O 队列或换 scheduler — 当前已是华为的 `maple`, 读 177MB/s 够用。
+
 ## 安装
 
 ```
@@ -92,6 +140,3 @@ su -c '/data/adb/ksu/bin/ksu_susfs show'
 
 管理器删除模块并重启。`uninstall.sh` 会 `start aptouch`。
 身份改动只在内存中，重启后由 GSI 属性自然恢复，无需手动还原。
-
-## LICENSE  
-**GPL-v2**  

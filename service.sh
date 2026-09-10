@@ -75,6 +75,57 @@ fi
 #      注: P10 上 Android 13 GSI 实测自带该库, 不需要 stub。
 log "服务动作完成"
 
+# ---------------------------------------------------------------- 3.5) zram (性能)
+# 实测依据 (2026-09-10, Android 13 GSI):
+#   内存 3.13 GiB, Swap 0K; kswapd0 占 15% 内核 CPU;
+#   vmstat allocstall_normal=184 (发生了直接回收停顿); pgmajfault=144684。
+#   开 zram 后由压缩交换承接冷页, 减少直接回收造成的 UI 停顿。
+cfg() { sed -nE "s/^$1=(.*)$/\1/p" "$MODDIR/device.conf" 2>/dev/null | head -1; }
+ZRAM_MB="$(cfg ZRAM_SIZE_MB)"; [ -n "$ZRAM_MB" ] || ZRAM_MB=1024
+ZRAM_ALGO="$(cfg ZRAM_ALGO)";  [ -n "$ZRAM_ALGO" ] || ZRAM_ALGO=lz4
+SWAPNESS="$(cfg SWAPPINESS)";  [ -n "$SWAPNESS" ] || SWAPNESS=100
+
+if [ "$ZRAM_MB" -gt 0 ] 2>/dev/null; then
+    if ! grep -q "zram0" /proc/swaps 2>/dev/null; then
+        if [ -b /dev/block/zram0 ]; then
+            echo "$ZRAM_ALGO" > /sys/block/zram0/comp_algorithm 2>/dev/null
+            echo 1 > /sys/block/zram0/reset 2>/dev/null
+            echo $((ZRAM_MB * 1024 * 1024)) > /sys/block/zram0/disksize 2>/dev/null
+            if mkswap /dev/block/zram0 >/dev/null 2>&1 && swapon /dev/block/zram0 2>/dev/null; then
+                log "zram: 已启用 ${ZRAM_MB}M ($ZRAM_ALGO)"
+            else
+                log "zram: swapon 失败"
+            fi
+        else
+            log "zram: /dev/block/zram0 不存在"
+        fi
+    else
+        log "zram: 已在用 ($(grep zram0 /proc/swaps | tr -s ' ' | cut -d' ' -f3)K)"
+    fi
+    [ -w /proc/sys/vm/swappiness ] && echo "$SWAPNESS" > /proc/sys/vm/swappiness 2>/dev/null \
+        && log "vm.swappiness=$(cat /proc/sys/vm/swappiness)"
+fi
+
+# ---------------------------------------------------------------- 3.6) CPU (可选)
+# 留空则不动。UI 果冻感主要来自 UI 线程唤醒后的爬频延迟, 本机无 schedtune
+# (/dev/stune 不存在), 因而没有触摸 boost。
+GOV="$(cfg CPU_GOV)"
+if [ -n "$GOV" ]; then
+    for g in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+        [ -w "$g" ] && echo "$GOV" > "$g" 2>/dev/null
+    done
+    log "CPU governor 设为 $GOV"
+fi
+LMF="$(cfg LITTLE_MIN_FREQ)"
+if [ -n "$LMF" ]; then
+    for c in 0 1 2 3; do
+        f="/sys/devices/system/cpu/cpu$c/cpufreq/scaling_min_freq"
+        [ -w "$f" ] && echo "$LMF" > "$f" 2>/dev/null
+    done
+    log "小核最低频率设为 $LMF"
+fi
+log "CPU 现状: $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null) little_min=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq 2>/dev/null)"
+
 # ---------------------------------------------------------------- 6) 不处理的问题
 # 无 SIM 卡时 com.android.phone 会反复崩 (SubscriptionController 对 subId=-1 写
 # siminfo 抛 UnsupportedOperationException)。这是 GSI 框架问题: 实测

@@ -46,6 +46,7 @@ HWVER="$(cfg HARDWARE_VERSION)"
 PART="$(cfg OVERRIDE_PARTITION_PROPS)"; [ -n "$PART" ] || PART=1
 SPOOF_FP="$(cfg SPOOF_FINGERPRINT)";    [ -n "$SPOOF_FP" ] || SPOOF_FP=0
 SUSFS_HIDE="$(cfg SUSFS_HIDE)";         [ -n "$SUSFS_HIDE" ] || SUSFS_HIDE=1
+DISABLE_TELEPHONY="$(cfg DISABLE_TELEPHONY)"; [ -n "$DISABLE_TELEPHONY" ] || DISABLE_TELEPHONY=1
 
 # auto: 用 bootloader 传进来的真实 sku
 if [ "$MODEL" = "auto" ]; then
@@ -115,6 +116,37 @@ for f in "$MODDIR"/vendor/lib64/*.so "$MODDIR"/vendor/lib/*.so; do
     log "labeled vendor_file: ${f##*/}"; n=$((n+1))
 done
 log "打标签文件数: $n"
+
+# ---------------------------------------------------------------- 无 SIM: 关掉电话栈
+# 无 SIM 时 com.android.phone 每 ~6.6s 崩一次 (SubscriptionController.setMccMnc 对
+# subId=-1 写 siminfo 抛 UnsupportedOperationException), 实测 9 次/分钟, 持续消耗
+# CPU 与存储写入。禁用包无效 (PhoneApp 是 persistent 进程, 仍会被拉起)。
+# 做法: 通过 vendor 权限 XML 声明该类硬件不存在, 框架就不会建立 GsmCdmaPhone。
+# 注意: overlay 模式下本文件读的是源文件内容, 开机时改写即可生效。
+TXML="$MODDIR/vendor/etc/permissions/p10-telephony-control.xml"
+if [ -f "$TXML" ]; then
+    if [ "$DISABLE_TELEPHONY" = "1" ]; then
+        cat > "$TXML" <<'XMLEOF'
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <unavailable-feature name="android.hardware.telephony" />
+    <unavailable-feature name="android.hardware.telephony.calling" />
+    <unavailable-feature name="android.hardware.telephony.data" />
+    <unavailable-feature name="android.hardware.telephony.gsm" />
+    <unavailable-feature name="android.hardware.telephony.messaging" />
+    <unavailable-feature name="android.hardware.telephony.radio.access" />
+    <unavailable-feature name="android.hardware.telephony.subscription" />
+</permissions>
+XMLEOF
+        log "telephony: 已声明为不可用 (DISABLE_TELEPHONY=1)"
+    else
+        printf '<?xml version="1.0" encoding="utf-8"?>\n<permissions>\n</permissions>\n' > "$TXML"
+        log "telephony: 保持原样 (DISABLE_TELEPHONY=0)"
+    fi
+    # 标签必须与同目录其他 xml 一致, 否则 PackageManager 读不到
+    chcon u:object_r:vendor_configs_file:s0 "$TXML" 2>/dev/null
+    chmod 0644 "$TXML" 2>/dev/null
+fi
 
 # ---------------------------------------------------------------- SUSFS 隐藏 (可选)
 # SUSFS 的 add_sus_path: 让非 su 进程在若干 syscall 上看不到该路径。
