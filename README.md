@@ -92,3 +92,6 @@ su -c '/data/adb/ksu/bin/ksu_susfs show'
 
 管理器删除模块并重启。`uninstall.sh` 会 `start aptouch`。
 身份改动只在内存中，重启后由 GSI 属性自然恢复，无需手动还原。
+
+## LICENSE  
+**GPL-v2**  
